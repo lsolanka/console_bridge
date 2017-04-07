@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.6)
 project(console_bridge)
 
 set (CONSOLE_BRIDGE_MAJOR_VERSION 0)
@@ -9,6 +9,7 @@ set (CONSOLE_BRIDGE_VERSION ${CONSOLE_BRIDGE_MAJOR_VERSION}.${CONSOLE_BRIDGE_MIN
 message (STATUS "${PROJECT_NAME} version ${CONSOLE_BRIDGE_VERSION}")
 
 include(GNUInstallDirs)
+include(GenerateExportHeader)
 
 # If compiler support symbol visibility, enable it.
 include(CheckCCompilerFlag)
@@ -21,7 +22,7 @@ if(MSVC OR MSVC90 OR MSVC10)
   set(MSVC ON)
 endif (MSVC OR MSVC90 OR MSVC10)
 
-include_directories(include)
+include_directories(include ${PROJECT_BINARY_DIR})
 
 # Control where libraries and executables are placed during the build
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
@@ -33,6 +34,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/>
 )
+generate_export_header(${PROJECT_NAME}
+    EXPORT_MACRO_NAME CONSOLE_BRIDGE_DLLAPI)
 
 install(TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}-targets
@@ -44,6 +47,9 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   FILES_MATCHING PATTERN "*.h")
+
+install(FILES ${PROJECT_BINARY_DIR}/${PROJECT_NAME}_export.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 set(PKG_NAME ${PROJECT_NAME})
 set(PKG_LIBRARIES ${PROJECT_NAME})
