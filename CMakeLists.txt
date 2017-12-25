@@ -11,10 +11,6 @@ message (STATUS "${PROJECT_NAME} version ${CONSOLE_BRIDGE_VERSION}")
 include(GNUInstallDirs)
 include(GenerateExportHeader)
 
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
 # If compiler support symbol visibility, enable it.
 include(CheckCCompilerFlag)
 check_c_compiler_flag(-fvisibility=hidden HAS_VISIBILITY)
@@ -22,23 +18,11 @@ if (HAS_VISIBILITY)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 endif()
 
-if(NOT WIN32)
-  # Use c++11 compiler flag, since it's needed for console.cpp
-  # It isn't in a header file, so it doesn't need to be exported
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
-endif()
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_CMAKE_CXX_FLAGS}")
-
 if(MSVC OR MSVC90 OR MSVC10)
   set(MSVC ON)
 endif (MSVC OR MSVC90 OR MSVC10)
 
 include_directories(include ${PROJECT_BINARY_DIR})
-
-if(NOT DEFINED BUILD_SHARED_LIBS)
-  option(BUILD_SHARED_LIBS "Build dynamically-linked binaries" ON)
-endif()
 
 # Control where libraries and executables are placed during the build
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
@@ -46,10 +30,12 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}"
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 
 add_library(${PROJECT_NAME} src/console.cpp)
-set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION
-               ${CONSOLE_BRIDGE_MAJOR_VERSION}.${CONSOLE_BRIDGE_MINOR_VERSION})
 generate_export_header(${PROJECT_NAME}
     EXPORT_MACRO_NAME CONSOLE_BRIDGE_DLLAPI)
+target_include_directories(${PROJECT_NAME} PUBLIC
+    $<BUILD_INTERFACE:${CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include/>
+)
 
 install(TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}-targets 
@@ -93,24 +79,12 @@ write_basic_config_version_file(
 
 install(EXPORT ${PROJECT_NAME}-targets
   FILE ${PROJECT_NAME}-targets.cmake
+  NAMESPACE ros::
   DESTINATION ${CMAKE_CONFIG_INSTALL_DIR})
 install(FILES
         "${CMAKE_BINARY_DIR}/${cmake_conf_file}"
         "${CMAKE_BINARY_DIR}/${cmake_conf_version_file}"
   DESTINATION ${CMAKE_CONFIG_INSTALL_DIR} COMPONENT cmake)
-
-if (NOT MSVC)
-  set(PKG_DESC "Console Bridge")
-  set(PKG_CB_LIBS "-l${PROJECT_NAME}")
-  set(pkg_conf_file "console_bridge.pc")
-  configure_file("${pkg_conf_file}.in" "${CMAKE_BINARY_DIR}/${pkg_conf_file}" @ONLY)
-  install(FILES "${CMAKE_BINARY_DIR}/${pkg_conf_file}"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/ COMPONENT pkgconfig)
-endif()
-
-SET_DIRECTORY_PROPERTIES(PROPERTIES
-  ADDITIONAL_MAKE_CLEAN_FILES ${CMAKE_BINARY_DIR}/console_bridge-config.cmake
-  ADDITIONAL_MAKE_CLEAN_FILES ${CMAKE_BINARY_DIR}/console_bridge.pc)
 
 enable_testing()
 add_subdirectory(test)
