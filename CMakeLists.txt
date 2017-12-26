@@ -24,11 +24,6 @@ endif (MSVC OR MSVC90 OR MSVC10)
 
 include_directories(include ${PROJECT_BINARY_DIR})
 
-# Control where libraries and executables are placed during the build
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
-
 add_library(${PROJECT_NAME} src/console.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CURRENT_SOURCE_DIR}/include>
